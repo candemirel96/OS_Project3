@@ -3,9 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "memalloc.h"
-
 
 typedef struct BlockHeader{
   size_t size;
@@ -16,30 +14,14 @@ typedef struct BlockHeader{
 void* chunkPointer;
 int chunkSize;
 int allocationMethod;
+BlockHeader* head;
+void* address = chunkPointer;
+// push method for the linkedlist
 
-
-pthread_mutex_t global_malloc_lock;
-
-struct header_t{
-  size_t size;
-  struct header_t* next;
-  unsigned is_free;
-};
-
-typedef char ALIGN[16];
-union header {
-	struct {
-		size_t size;
-		unsigned is_free;
-		union header *next;
-	} s;
-	ALIGN stub;
-};
-typedef union header header_t;
-
-header_t *head = NULL, *tail = NULL; // global
+// pthread_mutex_t global_malloc_lock;
 
 int mem_init(void* chunkpointer, int chunksize, int method){
+  // initializes the global variables to the parameters
   chunkPointer = chunkpointer;
   chunkSize = chunksize;
   allocationMethod = method;
@@ -48,21 +30,21 @@ int mem_init(void* chunkpointer, int chunksize, int method){
   return 0;
 }
 
-// header_t* get_free_block(size_t size)
-// {
-// 	header_t *curr = head;
-// 	while(curr) {
-// 		if (curr->s.is_free && curr->s.size >= size)
-// 			return curr;
-// 		curr = curr->s.next;
-// 	}
-// 	return NULL;
-// }
+void *mem_allocate(int size){
+  // return &chunkPointer[20];
+  // return chunkPointer + 20;
+  BlockHeader* previousBlock;
+  address = chunkPointer + size; // the return value of 0,1,2 functions
+  // BlockHeader newBlock  = address;
+  BlockHeader* newBlock  = (BlockHeader*)address;
+  newBlock->size = size;
+  newBlock->nextBlock = previousBlock->nextBlock;
+  previousBlock->nextBlock = newBlock;
 
-void *mem_allocate(size_t size){
-  return &chunkPointer[20];
-  return chunkPointer + 20;
-  blockHeader + sizeof(BlockHeader);
+  if( head == NULL ){
+    head = previousBlock;
+  }
+  return address + sizeof(BlockHeader);
 }
 
 void mem_free(void* objectptr){
@@ -72,6 +54,21 @@ void mem_free(void* objectptr){
 }
 
 void mem_print(void){
-  printf("\nprint called\n");
-  return;
+  int i = 0;
+  BlockHeader* currentBlock;
+  currentBlock = head;
+  // printf("%d\n" ,&head);
+  // printf("%d\n" ,head->nextBlock);
+
+  // printf("%d: Address: %d, Size: %d\n", 1, (char*)currentBlock - (char*)chunkPointer, currentBlock->size);
+  // currentBlock = currentBlock->nextBlock;
+  // printf("%d: Address: %d, Size: %d\n", 2, (char*)currentBlock - (char*)chunkPointer, currentBlock->size);
+
+
+  while(currentBlock != NULL){
+    printf("%d: Address: %d, Size: %d\n", i, (char*)currentBlock - (char*)chunkPointer, currentBlock->size);
+    currentBlock = currentBlock->nextBlock;
+    // printf("%d: Address: %d, Size: %d\n", i, (char*)currentBlock - (char*)chunkPointer, currentBlock->size);
+    i++;
+  }
 }
