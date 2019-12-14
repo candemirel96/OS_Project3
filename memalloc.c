@@ -24,6 +24,7 @@ BlockHeader* firstBlock;
 int mem_init(void* chunkpointer, int chunksize, int method){
   // initializes the global variables to the parameters
   chunkPointer = chunkpointer;
+  firstBlock = chunkPointer;
   chunkSize = chunksize;
   allocationMethod = method;
   remaningSize=chunkSize;
@@ -42,7 +43,11 @@ BlockHeader* insertBlock(BlockHeader* lastBlock, int size){
 BlockHeader* firstFitAddress(int size){
   // finds the first avalable space in the chunk
   BlockHeader* blockHeader = firstBlock; // replace with cutrrent block
-  while(blockHeader->next != NULL ){ // && (blockHeader->next - blockHeader >= remaningSize)
+  int gap;
+  while(blockHeader->next != NULL){ // && (blockHeader->next - blockHeader >= remaningSize)
+    printf("\nWhile\n");
+    gap = ((char*) blockHeader->next - ((char*) blockHeader + blockHeader->size + sizeof(BlockHeader)));
+    printf("Gap Value Is: %d\n" , gap);
     blockHeader = blockHeader->next;
   }
   return blockHeader; // the address of the last block
@@ -136,7 +141,7 @@ void mem_print(void){
 
   while (currentBlock!=NULL)
     {
-      printf("%d: Address: %lu, Size: %d\n", i, (char*)currentBlock - (char *)chunkPointer, currentBlock->size);
+      printf("%d: Address: %p, Size: %d\n", i, (char*)currentBlock - (char *)chunkPointer, currentBlock->size);
       i++;
       currentBlock=currentBlock->next;
     }

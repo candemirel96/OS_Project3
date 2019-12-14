@@ -42,9 +42,10 @@ int main(int argc, char* argv[]){
   // for allocate and deallocation
   x1 = mem_allocate(600);
   x2 = mem_allocate(700);
-  x3 = mem_allocate(150);
+
   mem_print();
   mem_free(x2);
+  x3 = mem_allocate(150);
   printf("\n");
   mem_print();
   return 0;
