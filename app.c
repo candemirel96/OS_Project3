@@ -41,7 +41,14 @@ int main(int argc, char* argv[]){
 
   // for allocate and deallocation
   x1 = mem_allocate(600);
+  char *asd = (char *)x1;
+  *asd = 'p';
+  printf("pegahin: %c si\n", *asd);
   x2 = mem_allocate(700);
-  //mem_print();
+  x3 = mem_allocate(150);
+  mem_print();
+  // removeBlock(x2);
+  mem_free(x2);
+  mem_print();
   return 0;
 }
