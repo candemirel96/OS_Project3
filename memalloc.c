@@ -3,75 +3,155 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "memalloc.h"
 
-
 typedef struct BlockHeader{
-  size_t size;
-  struct BlockHeader* nextBlock;
+  int size;
+  struct BlockHeader* next;
 } BlockHeader;
 
 // global variables
 void* chunkPointer;
 int chunkSize;
 int allocationMethod;
+BlockHeader* head;
+int remaningSize;
+BlockHeader* firstBlock;
+// push method for the linkedlist
 
-
-pthread_mutex_t global_malloc_lock;
-
-struct header_t{
-  size_t size;
-  struct header_t* next;
-  unsigned is_free;
-};
-
-typedef char ALIGN[16];
-union header {
-	struct {
-		size_t size;
-		unsigned is_free;
-		union header *next;
-	} s;
-	ALIGN stub;
-};
-typedef union header header_t;
-
-header_t *head = NULL, *tail = NULL; // global
+// pthread_mutex_t global_malloc_lock;
 
 int mem_init(void* chunkpointer, int chunksize, int method){
+  // initializes the global variables to the parameters
   chunkPointer = chunkpointer;
   chunkSize = chunksize;
+  firstBlock=chunkPointer;
   allocationMethod = method;
-
+  remaningSize=chunkSize;
   memset(chunkPointer, 0, chunkSize); // initializes the memory
   return 0;
 }
 
-// header_t* get_free_block(size_t size)
-// {
-// 	header_t *curr = head;
-// 	while(curr) {
-// 		if (curr->s.is_free && curr->s.size >= size)
-// 			return curr;
-// 		curr = curr->s.next;
-// 	}
-// 	return NULL;
+BlockHeader* insertBlock(BlockHeader* lastBlock, int size){
+  BlockHeader* newBlock = (BlockHeader*)((char*)lastBlock + sizeof(BlockHeader) + lastBlock->size);
+  newBlock->size = size;
+  newBlock->next = lastBlock->next;
+  lastBlock->next = newBlock;
+  return newBlock; // returns the address of the new block inserted
+}
+
+BlockHeader* firstFitAddress(int size){
+  // finds the first avalable space in the chunk
+  BlockHeader* blockHeader = firstBlock; // replace with cutrrent block
+  int gap;
+  while(blockHeader->next != NULL){ // && (blockHeader->next - blockHeader >= remaningSize)
+  //  printf("\nWhile\n");
+  //  printf("%p\n" ,  blockHeader);
+  //  printf("%p\n" , (char*) blockHeader);
+    printf("Block Header Adress %p\n" ,  blockHeader);
+    printf("Size of BlockHeader Struct :%lu\n" ,  sizeof(blockHeader));
+    printf("Block Header Next Adress %p\n" ,  blockHeader->next);
+    gap = (((char*)blockHeader->next) - ((char*)blockHeader+(sizeof(blockHeader)+blockHeader->size)));
+    printf("Checking gap: %d\n" , gap);
+    if(gap >=  size + sizeof(BlockHeader)){
+       printf(" Gap avail %p.\n" , blockHeader);
+       return blockHeader + sizeof(blockHeader) + blockHeader->size ;
+     }
+    blockHeader = blockHeader->next;
+
+  }
+  return blockHeader; // the address of the last block
+}
+
+// BlockHeader* bestFit()
+
+void *mem_allocate(int size){
+  if(firstBlock == NULL){
+    BlockHeader* newBlock = (BlockHeader*)(chunkPointer);
+    newBlock->size = size;
+    newBlock->next = NULL;
+    firstBlock = newBlock;
+    remaningSize -= size;
+    return (char*)newBlock + sizeof(BlockHeader);
+  }
+  if(allocationMethod == 0){ // for the first fit algorithm
+    BlockHeader* lastBlock = firstFitAddress(size);
+    BlockHeader* newBlock = insertBlock(lastBlock, size); // address of the new block inserted
+    return (char* )newBlock + sizeof(BlockHeader);
+  }
+
+//   if(remaningsize>=size){
+//     BlockHeader* newBlock;
+//
+//     newBlock=randomMethod(size);
+//     head=firstBlock;
+//
+//     while (head->next!=NULL)
+//     {
+//       if(newBlock<head){
+//         break;
+//       }
+//       head=head->next;
+//     }
+//     newBlock->next =head;
+//     head->next=newBlock;
+//     newBlock->size=size;
+// //    printf("Created At:%p\n",newBlock);
+// //    printf("Ends At:%p\n",newBlock->next);
+//     remaningsize-=size;
+//     printf("New Block Created At :%p Up to: %p\n",newBlock,newBlock->next);
+//     return  newBlock;
+//   }
+}
+
+
+
+
+
+
+// void* randomMethod(int size){
+//   head=firstBlock;
+//   while (head->next!=NULL)
+//     {
+//       printf("%d\n",(int)head->next-(int)head);
+//       printf("%d\n",size);
+//       if((int)head->next-(int)head>=size){
+//         printf("founded");
+//         break;
+//       }
+//       head->size=head->next->size;
+//       head=head->next;
+//     }
+//   return head;
 // }
 
-void *mem_allocate(size_t size){
-  return &chunkPointer[20];
-  return chunkPointer + 20;
-  blockHeader + sizeof(BlockHeader);
+void removeBlock(BlockHeader* block){
+  // traverse the linkedlist for one block before the delete-block
+  BlockHeader* prevBlock = firstBlock;
+  while((prevBlock != NULL) && (prevBlock->next != block)){
+    prevBlock = prevBlock->next;
+  }
+
+  prevBlock->next = block->next; // detach
+  block->next = NULL;
+  memset(block, 0, block->size + sizeof(BlockHeader)); // resets the memory
 }
 
 void mem_free(void* objectptr){
-
-  printf("\nfree called\n");
-  return;
+  BlockHeader* blockHeader = (BlockHeader*)((char*)objectptr - sizeof(BlockHeader));
+  removeBlock(blockHeader);
 }
-
 void mem_print(void){
-  printf("\nprint called\n");
-  return;
+
+  int i = 0;
+  BlockHeader* currentBlock;
+  currentBlock = firstBlock;
+
+
+  while (currentBlock!=NULL)
+    {
+      printf("%d: Address: %p, Size: %d\n", i, currentBlock, currentBlock->size);
+      i++;
+      currentBlock=currentBlock->next;
+    }
 }
