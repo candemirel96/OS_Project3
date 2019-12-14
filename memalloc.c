@@ -15,7 +15,7 @@ void* chunkPointer;
 int chunkSize;
 int allocationMethod;
 BlockHeader* head;
-int remaningsize;
+int remaningSize;
 BlockHeader* firstBlock;
 // push method for the linkedlist
 
@@ -26,10 +26,11 @@ int mem_init(void* chunkpointer, int chunksize, int method){
   chunkPointer = chunkpointer;
   chunkSize = chunksize;
   allocationMethod = method;
-  remaningsize=chunkSize;
+  remaningSize=chunkSize;
   memset(chunkPointer, 0, chunkSize); // initializes the memory
   return 0;
 }
+
 BlockHeader* insertBlock(BlockHeader* lastBlock, int size){
   BlockHeader* newBlock = (BlockHeader*)((char*)lastBlock + sizeof(BlockHeader) + lastBlock->size);
   newBlock->size = size;
@@ -40,13 +41,14 @@ BlockHeader* insertBlock(BlockHeader* lastBlock, int size){
 
 BlockHeader* firstFitAddress(int size){
   // finds the first avalable space in the chunk
-  BlockHeader* blockHeader = firstBlock;
-  while(blockHeader->next != NULL){
+  BlockHeader* blockHeader = firstBlock; // replace with cutrrent block
+  while(blockHeader->next != NULL ){ // && (blockHeader->next - blockHeader >= remaningSize)
     blockHeader = blockHeader->next;
   }
   return blockHeader; // the address of the last block
 }
 
+// BlockHeader* bestFit()
 
 void *mem_allocate(int size){
   if(firstBlock == NULL){
@@ -54,12 +56,14 @@ void *mem_allocate(int size){
     newBlock->size = size;
     newBlock->next = NULL;
     firstBlock = newBlock;
-    return newBlock + sizeof(BlockHeader);
+    remaningSize -= size;
+    return (char*)newBlock + sizeof(BlockHeader);
+
   }
   if(allocationMethod == 0){ // for the first fit algorithm
     BlockHeader* lastBlock = firstFitAddress(size);
     BlockHeader* newBlock = insertBlock(lastBlock, size); // address of the new block inserted
-    return newBlock + sizeof(BlockHeader);
+    return (char* )newBlock + sizeof(BlockHeader);
   }
 
 //   if(remaningsize>=size){
@@ -111,7 +115,6 @@ void removeBlock(BlockHeader* block){
   // traverse the linkedlist for one block before the delete-block
   BlockHeader* prevBlock = firstBlock;
   while((prevBlock != NULL) && (prevBlock->next != block)){
-    printf("We are cool in while.\n");
     prevBlock = prevBlock->next;
   }
 
@@ -121,14 +124,8 @@ void removeBlock(BlockHeader* block){
 }
 
 void mem_free(void* objectptr){
-  for (int i = 0; i < 200; i++){
-    char *asd = (char *)firstBlock + i;
-    printf("pegahin: %c si\n", *asd);
-  }
   BlockHeader* blockHeader = (BlockHeader*)((char*)objectptr - sizeof(BlockHeader));
-  printf("%dsize: \n", blockHeader->size);
-  printf("We are cool in memfree.\n");
-  // removeBlock(blockHeader);
+  removeBlock(blockHeader);
 }
 void mem_print(void){
 
