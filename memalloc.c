@@ -24,8 +24,8 @@ BlockHeader* firstBlock;
 int mem_init(void* chunkpointer, int chunksize, int method){
   // initializes the global variables to the parameters
   chunkPointer = chunkpointer;
-  firstBlock = chunkPointer;
   chunkSize = chunksize;
+  firstBlock=chunkPointer;
   allocationMethod = method;
   remaningSize=chunkSize;
   memset(chunkPointer, 0, chunkSize); // initializes the memory
@@ -35,7 +35,7 @@ int mem_init(void* chunkpointer, int chunksize, int method){
 BlockHeader* insertBlock(BlockHeader* lastBlock, int size){
   BlockHeader* newBlock = (BlockHeader*)((char*)lastBlock + sizeof(BlockHeader) + lastBlock->size);
   newBlock->size = size;
-  newBlock->next = NULL;
+  newBlock->next = lastBlock->next;
   lastBlock->next = newBlock;
   return newBlock; // returns the address of the new block inserted
 }
@@ -45,10 +45,20 @@ BlockHeader* firstFitAddress(int size){
   BlockHeader* blockHeader = firstBlock; // replace with cutrrent block
   int gap;
   while(blockHeader->next != NULL){ // && (blockHeader->next - blockHeader >= remaningSize)
-    printf("\nWhile\n");
-    gap = ((char*) blockHeader->next - ((char*) blockHeader + blockHeader->size + sizeof(BlockHeader)));
-    printf("Gap Value Is: %d\n" , gap);
+  //  printf("\nWhile\n");
+  //  printf("%p\n" ,  blockHeader);
+  //  printf("%p\n" , (char*) blockHeader);
+    printf("Block Header Adress %p\n" ,  blockHeader);
+    printf("Size of BlockHeader Struct :%lu\n" ,  sizeof(blockHeader));
+    printf("Block Header Next Adress %p\n" ,  blockHeader->next);
+    gap = (((char*)blockHeader->next) - ((char*)blockHeader+(sizeof(blockHeader)+blockHeader->size)));
+    printf("Checking gap: %d\n" , gap);
+    if(gap >=  size + sizeof(BlockHeader)){
+       printf(" Gap avail %p.\n" , blockHeader);
+       return blockHeader + sizeof(blockHeader) + blockHeader->size ;
+     }
     blockHeader = blockHeader->next;
+
   }
   return blockHeader; // the address of the last block
 }
@@ -63,7 +73,6 @@ void *mem_allocate(int size){
     firstBlock = newBlock;
     remaningSize -= size;
     return (char*)newBlock + sizeof(BlockHeader);
-
   }
   if(allocationMethod == 0){ // for the first fit algorithm
     BlockHeader* lastBlock = firstFitAddress(size);
@@ -141,7 +150,7 @@ void mem_print(void){
 
   while (currentBlock!=NULL)
     {
-      printf("%d: Address: %p, Size: %d\n", i, (char*)currentBlock - (char *)chunkPointer, currentBlock->size);
+      printf("%d: Address: %p, Size: %d\n", i, currentBlock, currentBlock->size);
       i++;
       currentBlock=currentBlock->next;
     }
