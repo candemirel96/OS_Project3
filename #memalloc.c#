@@ -18,7 +18,7 @@ int allocationMethod;
 BlockRecord_t recordStart;
 BlockRecord_t recordEnd;
 
-// pthread_mutex_t global_malloc_lock;
+pthread_mutex_t global_malloc_lock;
 
 int mem_init(void* input_chunkpointer, int input_chunksize, int input_method){
 

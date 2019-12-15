@@ -24,7 +24,6 @@ int main(int argc, char* argv[]){
   mem_print();
   void* testAddr6 = mem_allocate(32*1024);
   void* testAddr7 = mem_allocate(64*1024);
-  /* void* testAddr5 = mem_allocate(256); */
   mem_print();
   return 0;
 }
