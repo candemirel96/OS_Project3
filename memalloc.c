@@ -5,153 +5,184 @@
 #include <string.h>
 #include "memalloc.h"
 
-typedef struct BlockHeader{
+typedef struct BlockRecord_t{
+  void* address;
   int size;
-  struct BlockHeader* next;
-} BlockHeader;
+  struct BlockRecord_t* next;
+} BlockRecord_t;
 
 // global variables
 void* chunkPointer;
 int chunkSize;
 int allocationMethod;
-BlockHeader* head;
-int remaningSize;
-BlockHeader* firstBlock;
-// push method for the linkedlist
+BlockRecord_t* recordStart;
+BlockRecord_t* recordEnd;
 
 // pthread_mutex_t global_malloc_lock;
 
-int mem_init(void* chunkpointer, int chunksize, int method){
+int mem_init(void* input_chunkpointer, int input_chunksize, int input_method){
   // initializes the global variables to the parameters
-  chunkPointer = chunkpointer;
-  chunkSize = chunksize;
-  firstBlock=chunkPointer;
-  allocationMethod = method;
-  remaningSize=chunkSize;
-  memset(chunkPointer, 0, chunkSize); // initializes the memory
+
+  chunkPointer = input_chunkpointer;
+  chunkSize = input_chunksize;
+  allocationMethod = input_method;
+
+  // initialize first and last block records
+  recordStart = malloc(sizeof(BlockRecord_t));
+  recordEnd = malloc(sizeof(BlockRecord_t));
+  
+  recordStart->address = chunkPointer;
+  recordEnd->address = chunkPointer + chunkSize;
+  recordStart->size = 0;
+  recordEnd->size = 0;
+  recordStart->next = recordEnd;
+  recordEnd->next = NULL;
+
+  /* printf("Chunk starts at %p and ends at %p\n", */
+  /* 	 recordStart->address, recordEnd->address); */
+  
+  /* printf("recordStart is at %p\n", recordStart); */
+  /* printf("recordStart->next is at %p\n\n", recordStart->next); */
+  /* printf("recordEnd is at %p\n", recordEnd); */
+  /* printf("recordEnd->next is at %p\n\n", recordEnd->next); */
+
   return 0;
 }
 
-BlockHeader* insertBlock(BlockHeader* lastBlock, int size){
-  BlockHeader* newBlock = (BlockHeader*)((char*)lastBlock + sizeof(BlockHeader) + lastBlock->size);
-  newBlock->size = size;
-  newBlock->next = lastBlock->next;
-  lastBlock->next = newBlock;
-  return newBlock; // returns the address of the new block inserted
-}
-
-BlockHeader* firstFitAddress(int size){
-  // finds the first avalable space in the chunk
-  BlockHeader* blockHeader = firstBlock; // replace with cutrrent block
-  int gap;
-  while(blockHeader->next != NULL){ // && (blockHeader->next - blockHeader >= remaningSize)
-  //  printf("\nWhile\n");
-  //  printf("%p\n" ,  blockHeader);
-  //  printf("%p\n" , (char*) blockHeader);
-    printf("Block Header Adress %p\n" ,  blockHeader);
-    printf("Size of BlockHeader Struct :%lu\n" ,  sizeof(blockHeader));
-    printf("Block Header Next Adress %p\n" ,  blockHeader->next);
-    gap = (((char*)blockHeader->next) - ((char*)blockHeader+(sizeof(blockHeader)+blockHeader->size)));
-    printf("Checking gap: %d\n" , gap);
-    if(gap >=  size + sizeof(BlockHeader)){
-       printf(" Gap avail %p.\n" , blockHeader);
-       return blockHeader + sizeof(blockHeader) + blockHeader->size ;
-     }
-    blockHeader = blockHeader->next;
-
-  }
-  return blockHeader; // the address of the last block
-}
-
-// BlockHeader* bestFit()
-
-void *mem_allocate(int size){
-  if(firstBlock == NULL){
-    BlockHeader* newBlock = (BlockHeader*)(chunkPointer);
-    newBlock->size = size;
-    newBlock->next = NULL;
-    firstBlock = newBlock;
-    remaningSize -= size;
-    return (char*)newBlock + sizeof(BlockHeader);
-  }
-  if(allocationMethod == 0){ // for the first fit algorithm
-    BlockHeader* lastBlock = firstFitAddress(size);
-    BlockHeader* newBlock = insertBlock(lastBlock, size); // address of the new block inserted
-    return (char* )newBlock + sizeof(BlockHeader);
-  }
-
-//   if(remaningsize>=size){
-//     BlockHeader* newBlock;
-//
-//     newBlock=randomMethod(size);
-//     head=firstBlock;
-//
-//     while (head->next!=NULL)
-//     {
-//       if(newBlock<head){
-//         break;
-//       }
-//       head=head->next;
-//     }
-//     newBlock->next =head;
-//     head->next=newBlock;
-//     newBlock->size=size;
-// //    printf("Created At:%p\n",newBlock);
-// //    printf("Ends At:%p\n",newBlock->next);
-//     remaningsize-=size;
-//     printf("New Block Created At :%p Up to: %p\n",newBlock,newBlock->next);
-//     return  newBlock;
-//   }
+void* firstFitHoleSearch(int size){
+  void* availableAddress;
+  return availableAddress;
 }
 
 
-
-
-
-
-// void* randomMethod(int size){
-//   head=firstBlock;
-//   while (head->next!=NULL)
-//     {
-//       printf("%d\n",(int)head->next-(int)head);
-//       printf("%d\n",size);
-//       if((int)head->next-(int)head>=size){
-//         printf("founded");
-//         break;
-//       }
-//       head->size=head->next->size;
-//       head=head->next;
-//     }
-//   return head;
-// }
-
-void removeBlock(BlockHeader* block){
-  // traverse the linkedlist for one block before the delete-block
-  BlockHeader* prevBlock = firstBlock;
-  while((prevBlock != NULL) && (prevBlock->next != block)){
-    prevBlock = prevBlock->next;
-  }
-
-  prevBlock->next = block->next; // detach
-  block->next = NULL;
-  memset(block, 0, block->size + sizeof(BlockHeader)); // resets the memory
-}
-
-void mem_free(void* objectptr){
-  BlockHeader* blockHeader = (BlockHeader*)((char*)objectptr - sizeof(BlockHeader));
-  removeBlock(blockHeader);
-}
-void mem_print(void){
-
-  int i = 0;
-  BlockHeader* currentBlock;
-  currentBlock = firstBlock;
-
-
-  while (currentBlock!=NULL)
-    {
-      printf("%d: Address: %p, Size: %d\n", i, currentBlock, currentBlock->size);
-      i++;
-      currentBlock=currentBlock->next;
+void* memHoleSearch(int size, int allocationMethod){
+  void* availableAddress;
+  bool foundSpace = false;
+  BlockRecord_t *head;  
+  head = recordStart;
+  
+  while(head->next != NULL){    
+    int memHole = head->next->address - (head->address+head->size);
+    if((int)size <= (int)memHole){
+      availableAddress = head->address+head->size;
+      printf("Found an available spot at %p of size %d\n",
+	     availableAddress, memHole);
+      foundSpace = true;
+      break;
     }
+    head = head->next;
+  }
+  if (foundSpace) return availableAddress;
+  else { printf("No available space (memHole) found.\n");return NULL;}
 }
+
+BlockRecord_t* traverseRecordsByAddr_le(void* checkAddr){
+  BlockRecord_t *head, *p_head;
+  p_head = recordStart;
+  head = p_head->next;
+  while(head->next != NULL){
+    /* printf("Checking block %p\n", head); */
+    if (head->address >= checkAddr){
+      /* printf("The previous block was the answer.\n"); */
+      break;
+    }
+    p_head = p_head->next;
+    head = p_head->next;
+  }
+  return p_head;
+}
+
+
+BlockRecord_t* traverseRecordsByAddr_eq(void* checkAddr){
+  BlockRecord_t *head, *p_head;
+  p_head = recordStart;
+  head = p_head->next;
+  bool foundBlockRecord = false;
+  while(head->next != NULL){
+    /* printf("Checking block %p\n", head); */
+    if (head->address == checkAddr){
+      printf("Deleting Block Record at %p.\n", checkAddr);
+      foundBlockRecord = true;
+      break;
+    }
+    p_head = p_head->next;
+    head = p_head->next;
+  }
+  if (foundBlockRecord) return p_head;
+  else{
+    printf("No Block record found at %p.\n", checkAddr);
+    return NULL;
+  }
+}
+
+
+BlockRecord_t* insertBlockRecord(void* availAddr, int size){
+  BlockRecord_t* newBlockRecord;
+  newBlockRecord->address = availAddr;
+  newBlockRecord->size = size;
+
+  BlockRecord_t* cursorBlock = traverseRecordsByAddr_le(availAddr);
+  /* printf("cursorBlock is at %p\n", cursorBlock); */
+  /* printf("cursorBlock->next is at %p\n\n", cursorBlock->next); */
+  
+  
+  newBlockRecord->next = cursorBlock->next;
+  cursorBlock->next = newBlockRecord;
+
+  /* printf("newBlockRecord is at %p\n", newBlockRecord); */
+  /* printf("newBlockRecord->next is at %p\n\n", newBlockRecord->next); */
+  
+  return newBlockRecord;
+}
+
+void* mem_allocate(int size){
+  // find hole
+  printf("Looking for holes of size %d and greater.\n", size);
+  void* availAddr =  memHoleSearch(size, allocationMethod);
+
+  // update block records
+
+  if (availAddr !=NULL) {
+    BlockRecord_t* newBlockRecord = insertBlockRecord(availAddr, size);
+    printf("Created BlockRecord for block %p of size %d.\n", availAddr, size);
+    return newBlockRecord->address;
+  }
+  else {
+    printf("Memory allocation failed.\n");
+    return NULL;
+  }
+
+}
+
+void mem_free(void* memAddr){
+  BlockRecord_t *cursorBlock= traverseRecordsByAddr_eq(memAddr);
+  if (cursorBlock != NULL){
+    BlockRecord_t *blockToDelete = cursorBlock->next;
+    cursorBlock->next = blockToDelete->next;
+    
+    printf("Memory at %p is freed up.\n", blockToDelete->address);  
+    blockToDelete = NULL;
+  }
+  else{
+    printf("Block record deletion failed.\n");
+  }
+  
+}
+
+void mem_print(){
+  struct BlockRecord_t *head, *p_head;
+  p_head = recordStart;
+  head = p_head->next;
+
+  printf("\n*************************\n****  Block Records  ****\n*************************\n");
+  
+  while(head->next != NULL){
+    printf("Block Record: Size of %d Bytes, at %p.\n",
+	   head->size, head->address);
+    p_head = p_head->next;
+    head = p_head->next;
+  }
+  
+  printf("********** END **********\n\n");
+}
+
