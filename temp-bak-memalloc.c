@@ -51,6 +51,12 @@ int mem_init(void* input_chunkpointer, int input_chunksize, int input_method){
 
 void* firstFitHoleSearch(int size){
   void* availableAddress;
+  return availableAddress;
+}
+
+
+void* memHoleSearch(int size, int allocationMethod){
+  void* availableAddress;
   bool foundSpace = false;
   BlockRecord_t *head;  
   head = recordStart;
@@ -69,37 +75,6 @@ void* firstFitHoleSearch(int size){
   if (foundSpace) return availableAddress;
   else { printf("No available space (memHole) found.\n");return NULL;}
 }
-
-
-void* bestFitHoleSearch(int size){
-  void* availableAddress;
-  return availableAddress;
-}
-
-
-void* worstFitHoleSearch(int size){
-  void* availableAddress;
-  return availableAddress;
-}
-
-
-void* memHoleSearch(int size, int allocationMethod){
-  void* availableAddress;
-
-  if (allocationMethod == 0){
-    availableAddress = firstFitHoleSearch(size);
-  }
-  else if (allocationMethod == 1){
-    availableAddress = bestFitHoleSearch(size);
-  }
-  else if (allocationMethod == 2){
-    availableAddress = worstFitHoleSearch(size);
-  }
-  
-  return availableAddress;
-}
-
-
 
 BlockRecord_t* traverseRecordsByAddr_le(void* checkAddr){
   BlockRecord_t *head, *p_head;
