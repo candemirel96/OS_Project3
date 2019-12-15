@@ -55,7 +55,7 @@ void* firstFitHoleSearch(int size){
 }
 
 
-void* memHoleSearch(int size, int allocationMethod){
+void* memHoleSearch(int size){
   void* availableAddress;
   bool foundSpace = false;
   BlockRecord_t *head;  
@@ -138,7 +138,7 @@ BlockRecord_t* insertBlockRecord(void* availAddr, int size){
 void* mem_allocate(int size){
   // find hole
   printf("Looking for holes of size %d and greater.\n", size);
-  void* availAddr =  memHoleSearch(size, allocationMethod);
+  void* availAddr =  memHoleSearch(size);
 
   // update block records
 
