@@ -11,13 +11,13 @@ int main(int argc, char* argv[]){
 	 , initial_chunkPointer,
 	 (void*)((char*)initial_chunkPointer + initial_chunkSize));
   
-  mem_init(initial_chunkPointer, initial_chunkSize, 0);
+  mem_init(initial_chunkPointer, initial_chunkSize, 2);
   
   void* testAddr1 = mem_allocate(512*1024);
-  void* testAddr2 = mem_allocate(64*1024);
+  void* testAddr2 = mem_allocate(256*1024);
   void* testAddr3 = mem_allocate(128*1024);
   void* testAddr4 = mem_allocate(64*1024);
-  void* testAddr5 = mem_allocate(256*1024);
+  void* testAddr5 = mem_allocate(32*1024);
   mem_print();
   mem_free(testAddr2);
   mem_free(testAddr4);

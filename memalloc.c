@@ -49,32 +49,84 @@ int mem_init(void* input_chunkpointer, int input_chunksize, int input_method){
   return 0;
 }
 
-void* firstFitHoleSearch(int size){
-  void* availableAddress;
-  return availableAddress;
-}
-
 
 void* memHoleSearch(int size){
   void* availableAddress;
+
   bool foundSpace = false;
   BlockRecord_t *head;  
   head = recordStart;
+
+  if(allocationMethod == 0){
+    printf("Looking for holes in Chunk using FirstFit Method.\n");    
+    while(head->next != NULL){
+      //first fit
+      int memHole = head->next->address - (head->address+head->size);
+      if((int)size <= (int)memHole){
+	availableAddress = head->address+head->size;
+	printf("Found an available spot at %p of size %d\n",
+	       availableAddress, memHole);
+	foundSpace = true;
+	break;
+      }
+      head = head->next;
+    }
+  }
+
   
-  while(head->next != NULL){    
-    int memHole = head->next->address - (head->address+head->size);
-    if((int)size <= (int)memHole){
-      availableAddress = head->address+head->size;
+  if (allocationMethod == 1){
+    printf("Looking for holes in Chunk using BestFit Method.\n");
+    int bestSpotSize = chunkSize;
+    int memHole;
+    while (head->next != NULL){
+      //best fit
+      memHole = head->next->address - (head->address+head->size);
+      if((int)size <= (int)memHole &&  bestSpotSize >= (int)memHole){
+  	bestSpotSize = (int)memHole;
+  	availableAddress = head->address+head->size;
+      }
+      head = head->next;
+    }
+    if (availableAddress != NULL){
       printf("Found an available spot at %p of size %d\n",
 	     availableAddress, memHole);
       foundSpace = true;
-      break;
     }
-    head = head->next;
+    else foundSpace = false;
   }
+
+
+
+  
+  if (allocationMethod == 2){
+    printf("Looking for holes in Chunk using WorstFit Method.\n");
+    int bestSpotSize = 0;
+    int memHole;
+    while (head->next != NULL){
+      //worst fit
+      memHole = head->next->address - (head->address+head->size);
+      if((int)size <= (int)memHole &&  bestSpotSize <= (int)memHole){
+  	bestSpotSize = (int)memHole;
+  	availableAddress = head->address+head->size;
+      }
+      head = head->next;
+    }
+    if (availableAddress != NULL){
+      printf("Found an available spot at %p of size %d\n",
+	     availableAddress, memHole);
+      foundSpace = true;
+    }
+    else foundSpace = false;
+  }
+
+
+    
+  
+  
   if (foundSpace) return availableAddress;
   else { printf("No available space (memHole) found.\n");return NULL;}
 }
+
 
 BlockRecord_t* traverseRecordsByAddr_le(void* checkAddr){
   BlockRecord_t *head, *p_head;
