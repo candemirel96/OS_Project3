@@ -4,7 +4,8 @@
 #include "memalloc.h"
 
 int main(int argc, char* argv[]){
-  int initial_chunkSize = 1024 * 1024;
+  int size = atoi(argv[1]);
+  int initial_chunkSize = 1024 * size;
   void* initial_chunkPointer = malloc(initial_chunkSize);
   printf("A 1 kB memory chunk is created at %p ending at %p\n"
 	 , initial_chunkPointer,
